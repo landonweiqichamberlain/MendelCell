@@ -2,6 +2,15 @@
 __pycache__/
 *.pyc
 .DS_Store
+*.egg-info/
+mendelcell.egg-info/
+
 mendelcell_output/
 *.pdf
-*.tsv
+
+rna_single_cell_cluster.tsv
+rna_single_cell_clusters.tsv
+rna_single_cell_cluster.tsv.zip
+rna_single_cell_clusters.tsv.zip
+rna_single_cell_type.tsv
+rna_single_cell_type.tsv.zip
