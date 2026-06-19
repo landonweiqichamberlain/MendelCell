@@ -38,23 +38,25 @@ st.write(
 def read_uploaded_tsv(file_name, file_bytes):
     """
     Read uploaded TSV, TXT, ZIP, or GZ file.
-    Works with Streamlit uploaded files.
     """
+    import tempfile
     import zipfile
     import gzip
+    from pathlib import Path
 
-    file_name_lower = file_name.lower()
-    buffer = io.BytesIO(file_bytes)
+    suffix = Path(file_name).suffix.lower()
+
+    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+        tmp.write(file_bytes)
+        tmp_path = Path(tmp.name)
 
     try:
-        # Case 1: ZIP file, such as rna_single_cell_cluster.tsv.zip
-        if file_name_lower.endswith(".zip"):
-            with zipfile.ZipFile(buffer) as z:
-                file_list = z.namelist()
+        file_name_lower = file_name.lower()
 
-                # Ignore hidden Mac files inside ZIP
+        if file_name_lower.endswith(".zip"):
+            with zipfile.ZipFile(tmp_path) as z:
                 file_list = [
-                    f for f in file_list
+                    f for f in z.namelist()
                     if not f.startswith("__MACOSX")
                     and not f.endswith("/")
                     and not Path(f).name.startswith(".")
@@ -63,25 +65,31 @@ def read_uploaded_tsv(file_name, file_bytes):
                 if len(file_list) == 0:
                     raise ValueError("ZIP file is empty.")
 
-                if len(file_list) > 1:
+                # Use the first TSV/TXT file inside the ZIP
+                tsv_files = [
+                    f for f in file_list
+                    if f.lower().endswith((".tsv", ".txt"))
+                ]
+
+                if len(tsv_files) == 0:
                     raise ValueError(
-                        f"ZIP file contains multiple files: {file_list}. "
-                        "Please upload a ZIP containing only one TSV file."
+                        f"No TSV/TXT file found inside ZIP. Files found: {file_list}"
                     )
 
-                with z.open(file_list[0]) as f:
-                    return pd.read_csv(f, sep="\t")
+                with z.open(tsv_files[0]) as f:
+                    return pd.read_csv(f, sep="\t", low_memory=False)
 
-        # Case 2: GZIP file
         if file_name_lower.endswith(".gz"):
-            with gzip.open(buffer, "rt") as f:
-                return pd.read_csv(f, sep="\t")
+            with gzip.open(tmp_path, "rt") as f:
+                return pd.read_csv(f, sep="\t", low_memory=False)
 
-        # Case 3: normal TSV or TXT file
-        return pd.read_csv(buffer, sep="\t")
+        return pd.read_csv(tmp_path, sep="\t", low_memory=False)
 
     except Exception as e:
         raise ValueError(f"Could not read {file_name}: {e}")
+
+    finally:
+        tmp_path.unlink(missing_ok=True)
 
 
 def make_gene_count_plot(results):
@@ -173,6 +181,7 @@ try:
 
 except Exception as e:
     st.error(f"Could not read uploaded files: {e}")
+    st.exception(e)
     st.stop()
 
 
