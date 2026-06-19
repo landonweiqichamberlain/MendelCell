@@ -175,14 +175,24 @@ if cluster_file is None or hpa_file is None or gene_file is None:
 # -----------------------------
 
 try:
+    st.write("Reading cluster file:", cluster_file.name)
     clusters = read_uploaded_tsv(cluster_file.name, cluster_file.getvalue())
+    st.success(f"Cluster file loaded: {clusters.shape[0]} rows, {clusters.shape[1]} columns")
+
+    st.write("Reading HPA cell-type file:", hpa_file.name)
     hpa = read_uploaded_tsv(hpa_file.name, hpa_file.getvalue())
+    st.success(f"HPA file loaded: {hpa.shape[0]} rows, {hpa.shape[1]} columns")
+
+    st.write("Reading gene list file:", gene_file.name)
     gene_table = read_uploaded_tsv(gene_file.name, gene_file.getvalue())
+    st.success(f"Gene list loaded: {gene_table.shape[0]} rows, {gene_table.shape[1]} columns")
 
 except Exception as e:
     st.error(f"Could not read uploaded files: {e}")
     st.exception(e)
     st.stop()
+
+
 
 
 # -----------------------------
