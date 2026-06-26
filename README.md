@@ -7,111 +7,289 @@ sdk: docker
 app_port: 8501
 pinned: false
 ---
+---
+
+title: MendelCell
+emoji: 🧬
+colorFrom: blue
+colorTo: green
+sdk: docker
+app_port: 8501
+pinned: false
+-------------
+
 # MendelCell
 
-MendelCell is a Python package for prioritizing candidate genes by tissue-specific single-cell expression using Human Protein Atlas single-cell expression files.
+**MendelCell** is a Streamlit-based bioinformatics tool for prioritizing candidate genes by tissue-specific and cell-type-specific expression patterns.
 
-The package version separates the original single script into:
+The app uses a preprocessed Human Protein Atlas single-cell reference to help identify which candidate genes are expressed in relevant cell types. MendelCell was designed for exploratory analysis of rare disease and monogenic disease candidate genes, with an emphasis on immune and pancreatic cell-type biology.
 
-- `mendelcell/io.py` — read and clean input files
-- `mendelcell/analysis.py` — reusable analysis functions
-- `mendelcell/report.py` — TSV and PDF report generation
-- `mendelcell/cli.py` — command-line interface
-- `mendelcell/app.py` — placeholder for an optional Streamlit app
+## Live App
 
-## Installation
+The app can be deployed using Hugging Face Spaces or run locally with Streamlit.
 
-From this folder:
+Example Hugging Face Space URL:
+
+```text
+https://landonchamberlain-mendelcell.hf.space
+```
+
+## Features
+
+MendelCell allows users to:
+
+* Upload a candidate gene list as a TSV, TXT, or CSV file
+* Select a tissue or pseudo-tissue, such as `Immune cells`
+* Apply an expression threshold
+* Identify tissue-specific or immune-relevant cell types
+* View candidate genes expressed in each cell type
+* Generate summary tables
+* Generate plots of candidate gene expression
+* Plot the top 10 gene-cell type combinations by average nCPM
+* Download TSV outputs
+* Download a PDF report
+
+## Input Format
+
+The uploaded gene list must contain a column named:
+
+```text
+Gene Symbol
+```
+
+Example TSV file:
+
+```text
+Gene Symbol
+INS
+GCG
+PDX1
+CD3D
+PTPRC
+IL2RA
+CTLA4
+```
+
+CSV files are also supported, as long as they contain a `Gene Symbol` column.
+
+## Tissue Selection
+
+The app can analyze real tissues from the preprocessed reference, such as:
+
+```text
+Pancreas
+Lung
+Liver
+Kidney
+```
+
+MendelCell also includes a special pseudo-tissue:
+
+```text
+Immune cells
+```
+
+Typing `Immune cells` or `immune` will analyze immune-related cell types across the reference data.
+
+## Output Tables
+
+MendelCell generates several outputs:
+
+### Cell types unique to selected tissue
+
+Lists cell types associated with the selected tissue or pseudo-tissue.
+
+### Candidate gene count per cell type
+
+Shows how many uploaded candidate genes are expressed in each cell type.
+
+### Candidate genes found in each cell type
+
+Lists candidate genes detected above the selected expression threshold.
+
+### Filtered candidate genes
+
+Shows gene-cell type pairs that pass the expression threshold.
+
+### Mean nCPM values
+
+Shows nCPM expression values for candidate genes in relevant cell types.
+
+### Top 10 average nCPM plot
+
+Ranks the top 10 gene-cell type combinations by average nCPM value, with the highest values shown first.
+
+## Local Installation
+
+Clone the repository:
 
 ```bash
-pip install -e .
+git clone https://github.com/LandonChamberlain/MendelCell.git
+cd MendelCell
 ```
 
-For the optional Streamlit app later:
+Create and activate a virtual environment:
 
 ```bash
-pip install -r requirements-app.txt
+python3 -m venv .venv
+source .venv/bin/activate
 ```
 
-## Required input files
-
-MendelCell expects three tab-separated files:
-
-1. HPA cluster-level file, usually `rna_single_cell_cluster.tsv` or `.zip`
-2. HPA cell-type-level file, usually `rna_single_cell_type.tsv`
-3. Candidate gene file containing a column named `Gene Symbol`
-
-Required columns:
-
-### Cluster file
-
-- `Tissue`
-- `Cell type`
-- `Gene name`
-- `nCPM`
-
-### HPA cell-type file
-
-- `Gene name`
-- `Cell type`
-- `nTPM` or `nCPM`
-
-### Gene list file
-
-- `Gene Symbol`
-
-## Command-line use
+Install dependencies:
 
 ```bash
-mendelcell \
-  --clusters rna_single_cell_cluster.tsv \
-  --hpa rna_single_cell_type.tsv \
-  --genes Family16-Set1.tsv \
-  --tissue Pancreas \
-  --threshold 1.0 \
-  --outdir mendelcell_output
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+python -m pip install -e .
 ```
 
-This creates:
+Run the app:
 
-- `unique_cell_types.tsv`
-- `filtered_candidate_genes.tsv`
-- `candidate_gene_ncpm_by_cell_type.tsv`
-- `MendelCell_report_<TISSUE>.pdf`
-
-## Python use
-
-```python
-from mendelcell import run_mendelcell_from_files
-from mendelcell.report import create_pdf_report, write_tsv_outputs
-
-results = run_mendelcell_from_files(
-    cluster_file="rna_single_cell_cluster.tsv",
-    hpa_file="rna_single_cell_type.tsv",
-    gene_file="Family16-Set1.tsv",
-    tissue="Pancreas",
-    threshold=1.0,
-)
-
-write_tsv_outputs(results, "mendelcell_output")
-create_pdf_report(results, "mendelcell_output/MendelCell_report_Pancreas.pdf")
+```bash
+python -m streamlit run mendelcell/app.py
 ```
 
-## Current analysis logic
+## Requirements
 
-The current version identifies cell types that are unique to the selected tissue. A cell type is considered tissue-specific if it appears only in the selected tissue in the HPA cluster table.
+The app requires:
 
-Then MendelCell filters candidate genes that:
+```text
+streamlit
+pandas
+matplotlib
+pyarrow
+```
 
-1. Occur in the user-provided candidate gene list
-2. Are expressed in those tissue-specific cell types
-3. Have expression greater than or equal to the selected threshold
+The `requirements.txt` file should include:
 
-## Next steps before journal submission
+```text
+-e .
+streamlit
+pandas
+matplotlib
+pyarrow
+```
 
-- Add tests with small known example datasets
-- Add biological validation examples
-- Add threshold sensitivity analysis
-- Add documentation for HPA data version and provenance
-- Add a real Streamlit app using `mendelcell.analysis` and `mendelcell.report`
-- Add a `CITATION.cff` file and Zenodo DOI
+## Project Structure
+
+```text
+MendelCell/
+├── .github/
+│   └── workflows/
+│       └── sync-to-huggingface.yml
+├── .streamlit/
+│   └── config.toml
+├── data/
+│   ├── mendelcell_clusters_reference.parquet
+│   └── mendelcell_celltype_reference.parquet
+├── mendelcell/
+│   ├── __init__.py
+│   ├── app.py
+│   ├── analysis.py
+│   ├── io.py
+│   └── report.py
+├── scripts/
+│   └── build_reference.py
+├── Dockerfile
+├── README.md
+├── requirements.txt
+├── pyproject.toml
+└── .gitignore
+```
+
+## Reference Data
+
+MendelCell uses preprocessed Human Protein Atlas single-cell expression reference files:
+
+```text
+data/mendelcell_clusters_reference.parquet
+data/mendelcell_celltype_reference.parquet
+```
+
+The raw Human Protein Atlas TSV files are not included in the repository because they are large. Instead, MendelCell uses smaller preprocessed Parquet reference files for faster loading and deployment.
+
+Raw files that should not be committed:
+
+```text
+rna_single_cell_cluster.tsv
+rna_single_cell_type.tsv
+rna_single_cell_cluster.tsv.zip
+rna_single_cell_type.tsv.zip
+```
+
+## Hugging Face Deployment
+
+This repository can be deployed as a Hugging Face Docker Space.
+
+The `Dockerfile` runs:
+
+```bash
+python -m streamlit run mendelcell/app.py
+```
+
+The top of this README contains the Hugging Face Space metadata:
+
+```yaml
+---
+title: MendelCell
+emoji: 🧬
+colorFrom: blue
+colorTo: green
+sdk: docker
+app_port: 8501
+pinned: false
+---
+```
+
+## GitHub to Hugging Face Sync
+
+This repository can be synced automatically to Hugging Face Spaces using GitHub Actions.
+
+The workflow file is located at:
+
+```text
+.github/workflows/sync-to-huggingface.yml
+```
+
+After each push to the `main` branch, GitHub Actions can sync the latest code to the Hugging Face Space.
+
+## Files Not Tracked by Git
+
+The `.gitignore` file excludes local environments, Python cache files, generated metadata, large raw data files, and generated reports.
+
+Examples:
+
+```text
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+mendelcell.egg-info/
+.DS_Store
+*.pdf
+mendelcell_output/
+rna_single_cell_cluster.tsv
+rna_single_cell_type.tsv
+```
+
+## Important Notes
+
+MendelCell is intended for research and exploratory analysis only.
+
+It is not a diagnostic tool and should not be used to make clinical decisions without appropriate validation and expert review.
+
+## License
+
+MIT License
+
+
+## Citation
+
+If you use MendelCell in research, please cite the GitHub repository and any relevant Human Protein Atlas data sources used to build the reference files.
+
+## Author
+
+Landon Chamberlain
+
+Dublin High School
+UCSF Diabetes Center research volunteer
