@@ -28,7 +28,7 @@ CELLTYPE_REFERENCE = DATA_DIR / "mendelcell_celltype_reference.parquet"
 st.set_page_config(
     page_title="MendelCell",
     page_icon="🧬",
-    layout="wide"
+    layout="wide",
 )
 
 st.title("🧬 MendelCell")
@@ -44,6 +44,15 @@ st.write(
 # -----------------------------
 # Helper functions
 # -----------------------------
+
+def show_dataframe_with_1_index(df):
+    """
+    Display a dataframe in Streamlit with row numbering starting at 1.
+    """
+    display_df = df.copy()
+    display_df.index = range(1, len(display_df) + 1)
+    st.dataframe(display_df, width="stretch")
+
 
 def load_reference_data():
     """
@@ -90,7 +99,9 @@ def read_gene_list(file_name, file_bytes):
 
 
 def make_gene_count_plot(results):
-    """Create bar plot of candidate gene counts per cell type."""
+    """
+    Create bar plot of candidate gene counts per cell type.
+    """
     fig, ax = plt.subplots(figsize=(11, 6))
 
     plot_df = results.plot_df
@@ -112,7 +123,9 @@ def make_gene_count_plot(results):
 
 
 def make_ncpm_plot(results, cell_type):
-    """Create nCPM plot for one cell type."""
+    """
+    Create nCPM plot for one cell type.
+    """
     cell_df = results.ncpm_df[results.ncpm_df["Cell type"] == cell_type]
     cell_df = cell_df.sort_values("nCPM", ascending=False)
 
@@ -209,21 +222,21 @@ st.sidebar.header("1. Upload gene list")
 
 gene_file = st.sidebar.file_uploader(
     "Upload candidate gene list TSV, TXT, or CSV",
-    type=["tsv", "txt", "csv"]
+    type=["tsv", "txt", "csv"],
 )
 
 st.sidebar.header("2. Choose settings")
 
 selected_tissue = st.sidebar.text_input(
     "Enter tissue name",
-    value="Immune cells"
+    value="Immune cells",
 )
 
 threshold = st.sidebar.number_input(
     "Expression threshold",
     min_value=0.0,
     value=1.0,
-    step=0.5
+    step=0.5,
 )
 
 run_button = st.sidebar.button("Run MendelCell analysis")
@@ -237,6 +250,7 @@ with st.expander("Reference file status"):
     st.write("Expected reference files:")
 
     st.code(str(CLUSTER_REFERENCE))
+
     if CLUSTER_REFERENCE.exists():
         st.success(
             f"Cluster reference found "
@@ -246,6 +260,7 @@ with st.expander("Reference file status"):
         st.error("Cluster reference file is missing.")
 
     st.code(str(CELLTYPE_REFERENCE))
+
     if CELLTYPE_REFERENCE.exists():
         st.success(
             f"Cell-type reference found "
@@ -316,7 +331,7 @@ st.success(
 )
 
 with st.expander("Preview uploaded gene list"):
-    st.dataframe(gene_table.head(20), width="stretch")
+    show_dataframe_with_1_index(gene_table.head(20))
 
 
 # -----------------------------
@@ -372,7 +387,7 @@ try:
             hpa=hpa,
             gene_table=gene_table,
             tissue=selected_tissue,
-            threshold=threshold
+            threshold=threshold,
         )
 
 except Exception as e:
@@ -394,16 +409,16 @@ col2.metric("Tissue-specific cell types", len(results.unique_cells))
 col3.metric("Genes passing threshold", results.filtered["Gene name"].nunique())
 col4.metric(
     "Gene-cell pairs",
-    len(results.filtered[["Cell type", "Gene name"]].drop_duplicates())
+    len(results.filtered[["Cell type", "Gene name"]].drop_duplicates()),
 )
 
 
 st.header("Cell types unique to selected tissue")
-st.dataframe(results.unique_to_tissue, width="stretch")
+show_dataframe_with_1_index(results.unique_to_tissue)
 
 
 st.header("Candidate gene count per cell type")
-st.dataframe(results.cell_count_df, width="stretch")
+show_dataframe_with_1_index(results.cell_count_df)
 
 if not results.plot_df.empty:
     fig = make_gene_count_plot(results)
@@ -412,15 +427,15 @@ if not results.plot_df.empty:
 
 
 st.header("Candidate genes found in each cell type")
-st.dataframe(results.genes_in_cell_df, width="stretch")
+show_dataframe_with_1_index(results.genes_in_cell_df)
 
 
 st.header("Filtered candidate genes")
-st.dataframe(results.filtered_report, width="stretch")
+show_dataframe_with_1_index(results.filtered_report)
 
 
 st.header("Mean nCPM values")
-st.dataframe(results.ncpm_df, width="stretch")
+show_dataframe_with_1_index(results.ncpm_df)
 
 
 st.header("Top 10 gene-cell type combinations by average nCPM")
@@ -431,7 +446,7 @@ try:
     if top_ncpm_fig is None or top_ncpm_df.empty:
         st.info("No nCPM values available for top-10 plotting.")
     else:
-        st.dataframe(top_ncpm_df, width="stretch")
+        show_dataframe_with_1_index(top_ncpm_df)
         st.pyplot(top_ncpm_fig)
         plt.close(top_ncpm_fig)
 
@@ -482,7 +497,7 @@ try:
         label="Download PDF report",
         data=pdf_bytes,
         file_name=pdf_filename,
-        mime="application/pdf"
+        mime="application/pdf",
     )
 
 except Exception as e:
@@ -494,21 +509,21 @@ st.download_button(
     label="Download unique cell types TSV",
     data=unique_tsv,
     file_name="unique_cell_types.tsv",
-    mime="text/tab-separated-values"
+    mime="text/tab-separated-values",
 )
 
 st.download_button(
     label="Download filtered candidate genes TSV",
     data=filtered_tsv,
     file_name="filtered_candidate_genes.tsv",
-    mime="text/tab-separated-values"
+    mime="text/tab-separated-values",
 )
 
 st.download_button(
     label="Download nCPM table TSV",
     data=ncpm_tsv,
     file_name="candidate_gene_ncpm_by_cell_type.tsv",
-    mime="text/tab-separated-values"
+    mime="text/tab-separated-values",
 )
 
 if top_ncpm_tsv:
@@ -516,5 +531,5 @@ if top_ncpm_tsv:
         label="Download top 10 average nCPM TSV",
         data=top_ncpm_tsv,
         file_name="top_10_gene_cell_type_average_ncpm.tsv",
-        mime="text/tab-separated-values"
+        mime="text/tab-separated-values",
     )
