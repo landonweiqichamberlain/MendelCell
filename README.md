@@ -10,19 +10,6 @@ pinned: false
 
 # MendelCell
 
----
-
-title: MendelCell
-emoji: 🧬
-colorFrom: blue
-colorTo: green
-sdk: docker
-app_port: 8501
-pinned: false
--------------
-
-# MendelCell
-
 MendelCell is a Streamlit app that helps prioritize candidate genes by looking at their expression across tissue-specific and cell-type-specific single-cell reference data.
 
 The app was built to support exploratory analysis of candidate genes from rare disease, monogenic disease, and immune-related genetics projects.
