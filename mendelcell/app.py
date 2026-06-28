@@ -425,14 +425,6 @@ if not results.plot_df.empty:
     st.pyplot(fig)
     plt.close(fig)
 
-st.header("Filtered candidate genes")
-show_dataframe_with_1_index(results.filtered_report)
-
-
-st.header("Mean nCPM values")
-show_dataframe_with_1_index(results.ncpm_df)
-
-
 st.header("Top 10 gene-cell type combinations by average nCPM")
 
 try:
