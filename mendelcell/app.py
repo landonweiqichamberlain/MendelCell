@@ -412,19 +412,6 @@ col4.metric(
     len(results.filtered[["Cell type", "Gene name"]].drop_duplicates()),
 )
 
-
-st.header("Cell types unique to selected tissue")
-show_dataframe_with_1_index(results.unique_to_tissue)
-
-
-st.header("Candidate gene count per cell type")
-show_dataframe_with_1_index(results.cell_count_df)
-
-if not results.plot_df.empty:
-    fig = make_gene_count_plot(results)
-    st.pyplot(fig)
-    plt.close(fig)
-
 st.header("Top 10 gene-cell type combinations by average nCPM")
 
 try:
@@ -433,24 +420,16 @@ try:
     if top_ncpm_fig is None or top_ncpm_df.empty:
         st.info("No nCPM values available for top-10 plotting.")
     else:
-        show_dataframe_with_1_index(top_ncpm_df)
         st.pyplot(top_ncpm_fig)
         plt.close(top_ncpm_fig)
+
+        show_dataframe_with_1_index(top_ncpm_df)
 
 except Exception as e:
     st.error("Could not create top-10 nCPM plot.")
     st.exception(e)
 
 
-st.header("nCPM plots by cell type")
-
-if results.ncpm_df.empty:
-    st.info("No nCPM values available for plotting.")
-else:
-    for cell_type in results.ncpm_df["Cell type"].unique():
-        fig = make_ncpm_plot(results, cell_type)
-        st.pyplot(fig)
-        plt.close(fig)
 
 
 # -----------------------------
