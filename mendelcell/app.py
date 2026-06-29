@@ -237,7 +237,7 @@ def make_top_ncpm_plot(results, top_n=10):
         pad=18,
     )
 
-    ax.tick_params(axis="x", rotation=65, labelsize=9)
+    ax.tick_params(axis="x", rotation=65, labelsize=12)
     ax.tick_params(axis="y", labelsize=12)
 
     for label in ax.get_xticklabels():
