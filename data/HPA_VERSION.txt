@@ -1,0 +1,11 @@
+Human Protein Atlas version: 25.1
+Downloaded: June 2026
+Download page: https://www.proteinatlas.org/about/download
+
+Raw files used:
+- rna_single_cell_cluster.tsv
+- rna_single_cell_type.tsv
+
+Processed files generated:
+- mendelcell_clusters_reference.parquet
+- mendelcell_celltype_reference.parquet
