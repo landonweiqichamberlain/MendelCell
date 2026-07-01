@@ -198,6 +198,54 @@ def read_gene_list(file_name, file_bytes):
     return pd.read_csv(buffer, sep="\t")
 
 
+def make_genes_passing_threshold_table(results):
+    """
+    Create a summary table listing each unique gene that passes the threshold.
+
+    Each gene appears once, with the cell types where it passed the threshold.
+    """
+    expression_col = results.expression_col
+
+    if results.filtered.empty:
+        return pd.DataFrame(
+            columns=[
+                "Gene name",
+                "Number of cell types",
+                "Cell types passing threshold",
+                f"Max {expression_col}",
+                f"Mean {expression_col}",
+            ]
+        )
+
+    genes_df = results.filtered.copy()
+
+    summary_df = (
+        genes_df.groupby("Gene name")
+        .agg(
+            **{
+                "Number of cell types": ("Cell type", "nunique"),
+                "Cell types passing threshold": (
+                    "Cell type",
+                    lambda cells: ", ".join(sorted(set(cells))),
+                ),
+                f"Max {expression_col}": (expression_col, "max"),
+                f"Mean {expression_col}": (expression_col, "mean"),
+            }
+        )
+        .reset_index()
+        .sort_values(
+            [f"Max {expression_col}", "Gene name"],
+            ascending=[False, True],
+        )
+        .reset_index(drop=True)
+    )
+
+    summary_df[f"Max {expression_col}"] = summary_df[f"Max {expression_col}"].round(2)
+    summary_df[f"Mean {expression_col}"] = summary_df[f"Mean {expression_col}"].round(2)
+
+    return summary_df
+
+
 def make_top_ncpm_plot(results, top_n=10):
     """
     Plot the top cell-gene combinations by average nCPM.
@@ -525,6 +573,20 @@ col4.metric(
 )
 
 
+st.header("Genes passing threshold")
+
+genes_passing_threshold_df = make_genes_passing_threshold_table(results)
+
+if genes_passing_threshold_df.empty:
+    st.info("No genes passed the selected threshold.")
+else:
+    show_dataframe_with_1_index(
+        genes_passing_threshold_df,
+        height=350,
+        width=1200,
+    )
+
+
 st.header(f"Top {top_n} cell-gene combinations by average nCPM")
 
 try:
@@ -552,6 +614,14 @@ st.header("Download outputs")
 unique_tsv = results.unique_to_tissue.to_csv(sep="\t", index=False)
 filtered_tsv = results.filtered.to_csv(sep="\t", index=False)
 ncpm_tsv = results.ncpm_df.to_csv(sep="\t", index=False)
+
+if "genes_passing_threshold_df" in locals() and not genes_passing_threshold_df.empty:
+    genes_passing_threshold_tsv = genes_passing_threshold_df.to_csv(
+        sep="\t",
+        index=False,
+    )
+else:
+    genes_passing_threshold_tsv = ""
 
 if "top_ncpm_df" in locals() and not top_ncpm_df.empty:
     top_ncpm_tsv = top_ncpm_df.to_csv(sep="\t", index=False)
@@ -581,6 +651,14 @@ except Exception as e:
     st.error("Could not create PDF report.")
     st.exception(e)
 
+
+if genes_passing_threshold_tsv:
+    st.download_button(
+        label="Download genes passing threshold TSV",
+        data=genes_passing_threshold_tsv,
+        file_name="genes_passing_threshold.tsv",
+        mime="text/tab-separated-values",
+    )
 
 st.download_button(
     label="Download unique cell types TSV",
