@@ -70,7 +70,7 @@ st.subheader("Candidate gene prioritization by tissue-specific single-cell expre
 
 st.write(
     "MendelCell uses a preprocessed Human Protein Atlas single-cell reference. "
-    "Upload a candidate gene list, enter a tissue, choose expression settings, "
+    "Upload a candidate gene list, choose a tissue, choose expression settings, "
     "and generate ranked tables, plots, and a PDF report."
 )
 
@@ -151,7 +151,7 @@ def load_reference_data():
 @st.cache_data
 def load_available_tissues():
     """
-    Load available tissues for display on the homepage.
+    Load available tissues for display on the homepage and sidebar.
     """
     if not CLUSTER_REFERENCE.exists():
         raise FileNotFoundError(
@@ -316,9 +316,20 @@ gene_file = st.sidebar.file_uploader(
 
 st.sidebar.header("2. Choose settings")
 
-selected_tissue = st.sidebar.text_input(
-    "Enter tissue name",
-    value="Immune cells",
+try:
+    tissue_options = load_available_tissues()
+except Exception:
+    tissue_options = ["Immune cells"]
+
+default_tissue_index = 0
+
+if "Immune cells" in tissue_options:
+    default_tissue_index = tissue_options.index("Immune cells")
+
+selected_tissue = st.sidebar.selectbox(
+    "Choose tissue",
+    options=tissue_options,
+    index=default_tissue_index,
 )
 
 threshold = st.sidebar.number_input(
@@ -434,8 +445,8 @@ if gene_file is None and not use_example_gene_list:
     st.header("Available tissues")
 
     st.write(
-        "Enter one of these tissue names in the sidebar. "
-        "You can also enter **Immune cells** to analyze immune-related cell types."
+        "Choose one of these tissue names in the sidebar. "
+        "You can also choose **Immune cells** to analyze immune-related cell types."
     )
 
     try:
@@ -476,7 +487,6 @@ try:
 
 except Exception as e:
     st.error(f"Could not read gene list file: {e}")
-    st.exception(e)
     st.stop()
 
 
@@ -505,7 +515,7 @@ with st.expander("Preview gene list"):
 # -----------------------------
 
 if not run_button:
-    st.info("Enter a tissue and threshold, then click **Run MendelCell analysis**.")
+    st.info("Choose a tissue and threshold, then click **Run MendelCell analysis**.")
     st.stop()
 
 
@@ -524,7 +534,7 @@ try:
 
 except Exception as e:
     st.error("Could not load MendelCell reference files.")
-    st.exception(e)
+    st.error(str(e))
     st.stop()
 
 
@@ -546,7 +556,6 @@ try:
 
 except Exception as e:
     st.error(f"MendelCell analysis failed: {e}")
-    st.exception(e)
     st.stop()
 
 
@@ -627,7 +636,7 @@ try:
 
 except Exception as e:
     st.error(f"Could not create top-{top_n} nCPM plot.")
-    st.exception(e)
+    st.stop()
 
 
 # -----------------------------
@@ -682,7 +691,7 @@ try:
 
 except Exception as e:
     st.error("Could not create PDF report.")
-    st.exception(e)
+    st.error(str(e))
 
 
 if genes_passing_threshold_tsv:
